@@ -1,0 +1,49 @@
+---
+version: "2.1"
+volumes:
+  openvscode-server:
+services:
+  openvscode-server:
+    image: lscr.io/linuxserver/openvscode-server:latest
+    container_name: openvscode-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Los_Angeles
+      - CONNECTION_TOKEN= 4790-6A15-520B-00C4-4BE1
+      - CONNECTION_SECRET= #optional
+      - SUDO_PASSWORD=password 159753
+      - SUDO_PASSWORD_HASH= #optional
+    volumes:
+      - openvscode-server:/config
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    labels:
+      - io.balena.features.dbus=1
+      - io.balena.features.balena-socket=1
+      - io.balena.features.balena-api=1
+      - io.balena.features.supervisor-api=1
+    privileged: true
+
+  pylon:
+    image: lscr.io/linuxserver/pylon:latest
+    container_name: pylon
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Los_Angeles
+      - GITURL=https://github.com/SamEureka/balena-openvscode-server.git #optional
+      - PYUSER=sam #optional
+      - PYPASS=159753 #optional
+    volumes:
+      - pylon:/code #optional
+    ports:
+      - 3131:3131
+    restart: unless-stopped
+    labels:
+      - io.balena.features.dbus=1
+      - io.balena.features.balena-socket=1
+      - io.balena.features.balena-api=1
+      - io.balena.features.supervisor-api=1
+    privileged: true
