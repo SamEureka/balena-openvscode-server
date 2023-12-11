@@ -1,2 +1,2 @@
-# balena-openvscode-server
-OpenVSCode Server on balenaCloud devices
+# vscode-remote-ssh-server
+VSCode ssh server for remote development on balenaCloud devices
