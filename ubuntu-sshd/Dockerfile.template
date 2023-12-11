@@ -1,0 +1,77 @@
+# Use Ubuntu Jammy as the base image
+FROM ubuntu:jammy
+
+# Install OpenSSH server and essential tools
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server git curl nodejs npm zsh && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install the LTS version of Node.js and npm
+RUN npm install -g n && n lts && ln -sf /usr/local/n/versions/node/$(n --lts)/bin/node /usr/bin/node
+
+# Install TypeScript globally
+RUN npm install -g typescript
+
+# Install the latest version of Angular CLI
+RUN npm install -g @angular/cli
+
+# Create a user based on the value in the USERNAME build-arg
+ARG USERNAME
+RUN useradd -m -s /bin/bash $USERNAME
+
+# Copy the value of USER_SSH_PUBLIC_KEY to ssh authorized keys
+ARG USER_SSH_PUBLIC_KEY
+RUN mkdir -p /home/$USERNAME/.ssh && echo "$USER_SSH_PUBLIC_KEY" > /home/$USERNAME/.ssh/authorized_keys
+
+# Turn off password login for sshd
+RUN sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+# Turn off root login for sshd
+RUN sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# Create privilege separation directory
+RUN mkdir -p /run/sshd
+
+# Expose SSH and Angular default ports
+EXPOSE 22
+EXPOSE 4200
+
+# Start SSH server
+CMD ["/usr/sbin/sshd", "-D"]
+
+
+
+
+# # Use Ubuntu Jammy as the base image
+# FROM ubuntu:jammy
+
+# # Install OpenSSH server, git, and curl
+# RUN apt-get update && \
+#     DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server git curl && \
+#     rm -rf /var/lib/apt/lists/*
+
+# # Create a user based on the value in the USERNAME build-arg
+# ARG USERNAME
+# RUN useradd -m -s /bin/bash $USERNAME
+
+# # Copy the value of USER_SSH_PUBLIC_KEY to ssh authorized keys
+# ARG USER_SSH_PUBLIC_KEY
+# RUN mkdir -p /home/$USERNAME/.ssh && echo "$USER_SSH_PUBLIC_KEY" > /home/$USERNAME/.ssh/authorized_keys
+
+# # Turn off password login for sshd
+# RUN sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+# # Turn off root login for sshd
+# RUN sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# # Enable SSH port forwarding
+# RUN sed -i 's/#AllowTcpForwarding yes/AllowTcpForwarding yes/' /etc/ssh/sshd_config
+
+# # Create privilege separation directory
+# RUN mkdir -p /run/sshd
+
+# # Expose SSH port
+# EXPOSE 22
+
+# # Start SSH server
+# CMD ["/usr/sbin/sshd", "-D"]
