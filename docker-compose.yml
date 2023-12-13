@@ -1,19 +1,13 @@
 ---
 version: "2.1"
 volumes:
-  openvscode-server:
-  pylon:
-  openssh-server:
   ubuntu-sshd:
 
 services:
   ubuntu-sshd:
     build:
       context: ./ubuntu-sshd
-      dockerfile: Dockerfile.template
-      args:
-      - USERNAME=sam
-      - USER_SSH_PUBLIC_KEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC344Ag3hUA6BANKKQNLO6cf5iwoTrA6f8Q/ROf6S3vc3ua3PFHYW2QVnPa8Zwyi+3xdks9wt7eBkS1LCBtM3NQ5abj19EHGpG1UFZ0xMcls9FVBe9f8kxRK6hpshkGLhk/yAOg8WDiLEwnxUIYI4iYyVw5Xg5DgBwtLbFbuAOnP1iy7S+vsOMRIAfyQZe1Ha4OQ/kG0wUFV4Ozz4N373ee1r/PCrcYzfNfS3/BuWHXBfJ7NDE7R2qAB3XxKZkhw1jpbs7nm2MTc4qFjaA+DA6jSrsaf3acqnQCIMY/aTs/IM6TwHQ+sGEnUFDtvh3UCE+0xaszAgbah3ZDn1oJPQuJWF75qI9OxaDi4MZNKAJWk4vIynIu47/OURHb4gP2asFPFZN2Fc09NK9H6npKkfY3lvYhVOF0+h444R53AE6kVKT432tontSsgTa5s220awFKYRkTYuPs9RamLDqyauaj149XC0zEOEw4KSVJMfru+NJ8GDA5lgXc7p164v9l0uE= sam@ubuntu-3560=value
+      dockerfile: Dockerfile.template     
     container_name: ubuntu-sshd  
     ports:
       - "2222:22"
@@ -24,48 +18,3 @@ services:
       - io.balena.features.supervisor-api=1
     volumes:
       - ubuntu-sshd:/home
-      
-  # openvscode-server:
-  #   image: lscr.io/linuxserver/openvscode-server:latest
-  #   container_name: openvscode-server
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=America/Los_Angeles
-  #     - CONNECTION_TOKEN= 4790-6A15-520B-00C4-4BE1
-  #     - CONNECTION_SECRET= #optional
-  #     - SUDO_PASSWORD=password 159753
-  #     - SUDO_PASSWORD_HASH= #optional
-  #   volumes:
-  #     - openvscode-server:/config
-  #   ports:
-  #     - 3000:3000
-  #   restart: unless-stopped
-  #   labels:
-  #     - io.balena.features.dbus=1
-  #     - io.balena.features.balena-socket=1
-  #     - io.balena.features.balena-api=1
-  #     - io.balena.features.supervisor-api=1
-  #   privileged: true
-
-  # pylon:
-  #   image: lscr.io/linuxserver/pylon:latest
-  #   container_name: pylon
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=America/Los_Angeles
-  #     - GITURL=https://github.com/SamEureka/balena-openvscode-server.git #optional
-  #     - PYUSER=sam #optional
-  #     - PYPASS=159753 #optional
-  #   volumes:
-  #     - pylon:/code #optional
-  #   ports:
-  #     - 3131:3131
-  #   restart: unless-stopped
-  #   labels:
-  #     - io.balena.features.dbus=1
-  #     - io.balena.features.balena-socket=1
-  #     - io.balena.features.balena-api=1
-  #     - io.balena.features.supervisor-api=1
-  #   privileged: true

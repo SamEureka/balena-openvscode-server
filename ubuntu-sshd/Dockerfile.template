@@ -1,62 +1,34 @@
-# Use Ubuntu Jammy as the base image
-FROM ubuntu:jammy
+# Use Node 18.18.2 on Alpine 3.18 as the base image
+FROM node:18.18.2-alpine3.18
 
 # Install OpenSSH server and essential tools
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server git curl nodejs npm zsh && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install the LTS version of Node.js and npm
-RUN npm install -g n && n lts && ln -sf /usr/local/n/versions/node/$(n --lts)/bin/node /usr/bin/node
+RUN apk --no-cache add openssh git curl jq zsh
 
 # Install TypeScript globally
 RUN npm install -g typescript
 
-# Install the latest version of Angular CLI
+# Install the latest version of Angular CLI globally
 RUN npm install -g @angular/cli
 
-# Create a user based on the value in the USERNAME build-arg
-ARG USERNAME
-RUN useradd -m -s /bin/bash $USERNAME
+# Generate SSH host keys
+RUN ssh-keygen -A
 
-# Copy the value of USER_SSH_PUBLIC_KEY to ssh authorized keys
-ARG USER_SSH_PUBLIC_KEY
-RUN mkdir -p /home/$USERNAME/.ssh && echo "$USER_SSH_PUBLIC_KEY" > /home/$USERNAME/.ssh/authorized_keys
+# Copy the user details JSON file to the image
+COPY users.json /tmp/users.json
 
-# Turn off password login for sshd
-RUN sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# Iterate over each user in the JSON file and create users
+RUN cat /tmp/users.json | jq -c '.users[]' | while IFS= read -r user; do \
+        username=$(echo "$user" | jq -r '.username'); \
+        ssh_public_key=$(echo "$user" | jq -r '.ssh_public_key'); \
+        adduser -h /home/$username -s /bin/zsh -D "$username" && \
+        mkdir -p "/home/$username/.ssh" && \
+        echo "$ssh_public_key" > "/home/$username/.ssh/authorized_keys" && \
+        chmod 700 "/home/$username/.ssh" && \
+        chmod 600 "/home/$username/.ssh/authorized_keys" ;\
+    done
 
-# Turn off root login for sshd
-RUN sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-
-# Create privilege separation directory
-RUN mkdir -p /run/sshd
-
-# Expose SSH and Angular default ports
-EXPOSE 22
-EXPOSE 4200
-
-# Start SSH server
-CMD ["/usr/sbin/sshd", "-D"]
-
-
-
-
-# # Use Ubuntu Jammy as the base image
-# FROM ubuntu:jammy
-
-# # Install OpenSSH server, git, and curl
-# RUN apt-get update && \
-#     DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server git curl && \
-#     rm -rf /var/lib/apt/lists/*
-
-# # Create a user based on the value in the USERNAME build-arg
-# ARG USERNAME
-# RUN useradd -m -s /bin/bash $USERNAME
-
-# # Copy the value of USER_SSH_PUBLIC_KEY to ssh authorized keys
-# ARG USER_SSH_PUBLIC_KEY
-# RUN mkdir -p /home/$USERNAME/.ssh && echo "$USER_SSH_PUBLIC_KEY" > /home/$USERNAME/.ssh/authorized_keys
+# Cleanup
+RUN rm /tmp/users.json
 
 # # Turn off password login for sshd
 # RUN sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
@@ -64,14 +36,84 @@ CMD ["/usr/sbin/sshd", "-D"]
 # # Turn off root login for sshd
 # RUN sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
 
-# # Enable SSH port forwarding
-# RUN sed -i 's/#AllowTcpForwarding yes/AllowTcpForwarding yes/' /etc/ssh/sshd_config
+RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+
+# Create privilege separation directory
+RUN mkdir -p /run/sshd
+
+# Start SSH server
+CMD ["/usr/sbin/sshd", "-D"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Use Node 18.18.2 on Alpine 3.18 as the base image
+# FROM node:18.18.2-alpine3.18
+
+# # Install OpenSSH server and essential tools
+# RUN apk --no-cache add openssh-server git curl jq zsh
+
+# # Install TypeScript globally
+# RUN npm install -g typescript
+
+# # Install the latest version of Angular CLI globally
+# RUN npm install -g @angular/cli
+
+# # Copy the user details YAML file to the image
+# COPY users.yaml /tmp/users.yaml
+
+# # Iterate over each user in the YAML file and create users
+# SHELL ["/bin/ash", "-c"]
+
+# # Debugging: Print the content of the users.yaml file
+# RUN cat /tmp/users.yaml
+
+# # Iterate over each user in the YAML file and create users
+# RUN users=$(cat /tmp/users.yaml | jq -c '.users[]'); \
+#     echo "Users data: $users"; \
+#     echo "$users" | while IFS= read -r user; do \
+#         echo "Processing user: $user"; \
+#         # ... rest of your script
+#     done
+
+
+# # # Iterate over each user in the YAML file and create users
+# # RUN users=$(cat /tmp/users.yaml | jq -c '.users[]'); \
+# #     echo "$users" | while IFS= read -r user; do \
+# #         username=$(echo "$user" | jq -r '.username'); \
+# #         ssh_public_key=$(echo "$user" | jq -r '.ssh_public_key'); \
+# #         adduser -D -s /bin/zsh "$username" && \
+# #         mkdir -p "/home/$username/.ssh" && \
+# #         echo "$ssh_public_key" > "/home/$username/.ssh/authorized_keys"; \
+# #     done
+
+# # Cleanup
+# RUN rm /tmp/users.yaml
+
+# # Turn off password login for sshd
+# RUN sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+# # Turn off root login for sshd
+# RUN sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
 
 # # Create privilege separation directory
 # RUN mkdir -p /run/sshd
-
-# # Expose SSH port
-# EXPOSE 22
 
 # # Start SSH server
 # CMD ["/usr/sbin/sshd", "-D"]
